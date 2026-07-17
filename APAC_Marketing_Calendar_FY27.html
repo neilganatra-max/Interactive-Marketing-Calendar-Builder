@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APAC Marketing Calendar – FY27</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0f2744; --navy-mid: #1a3a5c; --orange: #f97316;
+    --orange-light: #fed7aa; --surface-0: #f4f6f9; --surface-1: #ffffff;
+    --surface-2: #f9fafb; --border: #e2e8f0; --border-strong: #cbd5e1;
+    --text-primary: #0f172a; --text-secondary: #475569; --text-muted: #94a3b8;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--surface-0); color: var(--text-primary); min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: var(--navy); color: #fff; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 8px rgba(0,0,0,.2); }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo { width: 34px; height: 34px; background: var(--orange); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: #fff; }
+  .header-sub { font-size: 12px; color: #94a3b8; margin-top: 1px; }
+  .fy-badge { background: rgba(249,115,22,.2); color: var(--orange); border: 1px solid rgba(249,115,22,.35); border-radius: 20px; font-size: 12px; font-weight: 600; padding: 3px 12px; }
+
+  /* SYNC STATUS */
+  .sync-bar { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,.7); }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; flex-shrink: 0; transition: background .3s; }
+  .sync-dot.synced { background: #4ade80; }
+  .sync-dot.saving { background: var(--orange); animation: pulse .8s infinite; }
+  .sync-dot.error  { background: #f87171; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* LAYOUT */
+  .page-wrap { display: flex; }
+  .sidebar { width: 220px; min-width: 220px; background: var(--surface-1); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 14px 12px; gap: 4px; position: sticky; top: 62px; height: calc(100vh - 62px); overflow-y: auto; flex-shrink: 0; }
+
+  /* SIDEBAR GROUPS */
+  .ch-group-label { font-size: 9px; font-weight: 700; color: var(--text-muted); letter-spacing: .08em; text-transform: uppercase; padding: 10px 2px 5px; border-bottom: 1px solid var(--border); margin-bottom: 4px; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+  .ch-group-label::before { content: ''; display: block; width: 3px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .ch-group-label.field::before  { background: #0f766e; }
+  .ch-group-label.digital::before { background: #4338ca; }
+  .ch-group-label.other::before  { background: #6b7280; }
+  .ch-group-label:first-child { margin-top: 0; }
+
+  .chip { padding: 6px 9px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: grab; user-select: none; transition: transform .1s, box-shadow .1s; line-height: 1.3; box-shadow: 0 1px 3px rgba(0,0,0,.12); display: flex; align-items: center; gap: 6px; }
+  .chip::before { content: '⠿'; font-size: 10px; opacity: .5; flex-shrink: 0; }
+  .chip:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,.18); }
+  .chip:active { cursor: grabbing; transform: scale(.97); }
+  .chip.dragging { opacity: .35; }
+
+  .sidebar-divider { height: 1px; background: var(--border); margin: 10px 0; }
+  .sidebar-totals-label { font-size: 10px; font-weight: 600; color: var(--text-muted); letter-spacing: .07em; text-transform: uppercase; margin-bottom: 8px; }
+  .mini-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .mini-stat { background: var(--surface-0); border-radius: 6px; padding: 8px; border: 1px solid var(--border); }
+  .mini-stat .ms-label { font-size: 9px; color: var(--text-muted); margin-bottom: 2px; }
+  .mini-stat .ms-val { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .mini-stat.accent .ms-val { color: var(--orange); }
+
+  /* MAIN / CALENDAR */
+  .main { flex: 1; overflow: auto; padding: 20px 24px 48px; }
+  .cal-scroll { overflow-x: auto; }
+  .calendar-grid { display: grid; grid-template-columns: 130px repeat(12, minmax(80px, 1fr)); min-width: 1100px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .q-spacer { background: var(--navy); grid-column: 1; padding: 8px; font-size: 10px; color: rgba(255,255,255,.5); display: flex; align-items: center; }
+  .q-header-cell { background: var(--navy); color: #fff; font-size: 11px; font-weight: 600; padding: 8px 4px; text-align: center; letter-spacing: .04em; border-left: 1px solid rgba(255,255,255,.1); }
+  .m-spacer { background: var(--navy-mid); grid-column: 1; padding: 7px 10px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,.7); display: flex; align-items: center; }
+  .m-header { background: var(--navy-mid); color: rgba(255,255,255,.85); font-size: 11px; font-weight: 500; padding: 7px 4px; text-align: center; border-left: 1px solid rgba(255,255,255,.08); }
+  .m-header.q-start { border-left: 2px solid rgba(249,115,22,.4); }
+  .country-label { background: var(--surface-1); border-top: 1px solid var(--border); border-right: 1px solid var(--border); padding: 8px 10px; font-size: 12px; font-weight: 600; color: var(--text-primary); display: flex; align-items: flex-start; gap: 6px; position: sticky; left: 0; z-index: 3; }
+  .drop-cell { background: var(--surface-2); border-top: 1px solid var(--border); border-left: 1px solid var(--border); padding: 4px; min-height: 58px; transition: background .12s; display: flex; flex-direction: column; gap: 3px; }
+  .drop-cell.q-start { border-left: 2px solid rgba(249,115,22,.3); }
+  .drop-cell.drag-over { background: #eff6ff; border-color: #3b82f6; }
+
+  /* PLACED CHIPS */
+  .placed-chip { padding: 3px 6px; border-radius: 4px; font-size: 9.5px; font-weight: 500; cursor: pointer; line-height: 1.3; display: flex; align-items: center; justify-content: space-between; gap: 3px; transition: filter .1s; }
+  .placed-chip:hover { filter: brightness(1.1); }
+  .placed-chip:hover .rm-btn { opacity: 1; }
+  .rm-btn { opacity: 0; cursor: pointer; font-size: 12px; line-height: 1; background: none; border: none; padding: 0; color: inherit; flex-shrink: 0; transition: opacity .15s; }
+  .chip-inner { flex: 1; overflow: hidden; min-width: 0; }
+  .chip-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .chip-meta  { font-size: 8px; opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+
+  /* SUMMARY TABLE */
+  .summary-wrap { margin-top: 28px; }
+  .summary-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .summary-title::before { content: ''; display: block; width: 4px; height: 16px; background: var(--orange); border-radius: 2px; }
+  .summary-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .summary-table { width: 100%; border-collapse: collapse; min-width: 820px; background: var(--surface-1); }
+  .summary-table thead th { background: var(--navy); color: #fff; padding: 10px 14px; font-size: 11px; font-weight: 600; text-align: left; letter-spacing: .04em; white-space: nowrap; }
+  .summary-table tbody td { padding: 9px 14px; font-size: 12px; border-bottom: 1px solid var(--border); color: var(--text-primary); white-space: nowrap; }
+  .summary-table tbody tr:hover td { background: #f8fafc; }
+  .summary-table tbody tr:last-child td { border-bottom: none; }
+  .summary-table tfoot td { padding: 11px 14px; font-size: 12px; font-weight: 700; background: #0f2744; color: #fff; border-top: 2px solid var(--orange); }
+  .country-cell { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .campaign-badge { display: inline-flex; align-items: center; justify-content: center; background: var(--orange-light); color: #9a3412; border-radius: 12px; font-size: 11px; font-weight: 600; padding: 1px 8px; min-width: 28px; }
+  .na-text { color: var(--text-muted); font-style: italic; font-size: 11px; }
+  .pipe-val { color: #15803d; font-weight: 600; }
+  .cost-val { color: #1d4ed8; font-weight: 600; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; display: none; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface-1); border-radius: 14px; padding: 24px; width: 420px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,.25); animation: slideUp .18s ease; }
+  @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; gap: 10px; }
+  .modal-header h3 { font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); padding: 2px 6px; border-radius: 4px; flex-shrink: 0; }
+
+  /* ROI PREVIEW CARD */
+  .roi-preview { background: linear-gradient(135deg, #0f2744 0%, #1a3a5c 100%); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .roi-preview.hidden { display: none; }
+  .rp-item .rp-label { font-size: 9px; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+  .rp-item .rp-val   { font-size: 14px; font-weight: 700; color: #fff; }
+  .rp-item .rp-val.orange { color: var(--orange); }
+  .roi-note { font-size: 10px; color: rgba(255,255,255,.4); margin-top: 6px; grid-column: span 4; }
+
+  .modal-section { margin-bottom: 12px; }
+  .modal-section label { font-size: 12px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 5px; }
+  .modal-input { width: 100%; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--border-strong); background: var(--surface-0); font-size: 13px; color: var(--text-primary); outline: none; transition: border-color .15s; font-family: inherit; }
+  .modal-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+  .hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-grid-inner label { font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+  .na-badge { background: var(--surface-0); border-radius: 7px; padding: 8px 10px; font-size: 11px; color: var(--text-muted); font-style: italic; border: 1px solid var(--border); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  .btn { padding: 8px 18px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border-strong); background: var(--surface-0); color: var(--text-primary); transition: background .12s; font-family: inherit; }
+  .btn:hover { background: var(--border); }
+  .btn-primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .btn-primary:hover { background: var(--navy-mid); }
+  .btn-danger { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+  .btn-danger:hover { background: #fee2e2; }
+  .saved-by { font-size: 10px; color: var(--text-muted); margin-top: 8px; font-style: italic; }
+
+  /* LEGEND */
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; margin-bottom: 4px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  /* LOADING */
+  .loading-overlay { position: fixed; inset: 0; background: rgba(15,39,68,.92); z-index: 300; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #fff; }
+  .loading-overlay.hidden { display: none; }
+  .spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,.2); border-top-color: var(--orange); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-title { font-size: 16px; font-weight: 600; }
+  .loading-sub { font-size: 13px; color: rgba(255,255,255,.5); }
+
+  /* ERROR BANNER */
+  .error-banner { background: #fef2f2; border-bottom: 1px solid #fecaca; padding: 10px 24px; font-size: 13px; color: #b91c1c; display: none; align-items: center; gap: 10px; }
+  .error-banner.show { display: flex; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-title">Loading APAC Marketing Calendar</div>
+  <div class="loading-sub">Connecting to shared data…</div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">F</div>
+    <div>
+      <div style="font-size:16px;font-weight:600;color:#fff">APAC Marketing Calendar</div>
+      <div class="header-sub">Shared live plan · drag to add · click to edit · auto-saves to Google Sheets</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="sync-bar">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-label">Connecting…</span>
+    </div>
+    <span class="fy-badge">FY27</span>
+  </div>
+</div>
+
+<!-- ERROR BANNER -->
+<div class="error-banner" id="error-banner">
+  ⚠️ <strong>Could not connect to shared data.</strong> Your changes won't save. Check your internet connection and refresh the page.
+  <button class="btn" style="margin-left:auto;font-size:12px;padding:4px 10px" onclick="loadFromSheet()">Retry</button>
+</div>
+
+<div class="page-wrap">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div id="channel-list"></div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-totals-label">Plan totals</div>
+    <div class="mini-stat-grid">
+      <div class="mini-stat accent"><div class="ms-label">Budget</div><div class="ms-val" id="tot-cost">$0</div></div>
+      <div class="mini-stat"><div class="ms-label">Campaigns</div><div class="ms-val" id="tot-cmp">0</div></div>
+      <div class="mini-stat"><div class="ms-label">MQLs</div><div class="ms-val" id="tot-mql">0</div></div>
+      <div class="mini-stat"><div class="ms-label">S1s</div><div class="ms-val" id="tot-s1">0</div></div>
+      <div class="mini-stat" style="grid-column:span 2"><div class="ms-label">S1 Pipeline</div><div class="ms-val" id="tot-pipe">$0</div></div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <button class="btn" style="font-size:11px;padding:6px 10px;width:100%" onclick="loadFromSheet()">↻ Refresh</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="cal-scroll">
+      <div class="calendar-grid" id="calendar"></div>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="summary-wrap">
+      <div class="summary-title">Country summary</div>
+      <div class="summary-table-wrap">
+        <table class="summary-table">
+          <thead><tr>
+            <th>Country</th><th># Campaigns</th><th>Budget</th>
+            <th>Est. MQLs</th><th>Est. S1s</th><th>Est. S1 Pipeline</th><th>Top channels</th>
+          </tr></thead>
+          <tbody id="summary-body"></tbody>
+          <tfoot id="summary-foot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Edit activity</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="roi-preview" id="roi-preview">
+      <div class="rp-item"><div class="rp-label">Est. MQLs</div><div class="rp-val" id="rp-mql">–</div></div>
+      <div class="rp-item"><div class="rp-label">Est. S1s</div><div class="rp-val" id="rp-s1">–</div></div>
+      <div class="rp-item"><div class="rp-label">Est. Pipeline</div><div class="rp-val orange" id="rp-pipe">–</div></div>
+      <div class="rp-item"><div class="rp-label">CP-MQL</div><div class="rp-val" id="rp-cpmql">–</div></div>
+      <div class="roi-note" id="rp-note"></div>
+    </div>
+    <div class="modal-section">
+      <label>Activity name <span style="color:var(--text-muted);font-weight:400">(rename for this cell)</span></label>
+      <input id="m-name" type="text" class="modal-input" placeholder="">
+      <div class="hint">Leave blank to use the default channel name</div>
+    </div>
+    <div class="modal-section">
+      <label>Cost (USD)</label>
+      <input id="m-cost" type="number" min="0" class="modal-input" placeholder="0" oninput="updateRoiPreview()">
+    </div>
+    <div class="modal-section" id="roi-fields-wrap">
+      <label>Override ROI estimates <span style="color:var(--text-muted);font-weight:400">(optional — defaults calculated from cost)</span></label>
+      <div class="modal-grid" id="m-roi-section"></div>
+    </div>
+    <div class="modal-section">
+      <label>Notes / details</label>
+      <input id="m-notes" type="text" class="modal-input" placeholder="Partner, venue, theme…">
+    </div>
+    <div class="saved-by" id="modal-saved-by"></div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="deleteActivity()">Remove</button>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveModal()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── HARDCODED SCRIPT URL ──────────────────────────────────────
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwaW_9fntNWEoke12tSydoBKF6C31khto2EE4AWF8E_YBgfy7eGaynFI4b-Z3oJyiE/exec';
+
+// ── CHANNEL DEFINITIONS ───────────────────────────────────────
+const AVG_DEAL = 80000;
+
+const CHANNEL_GROUPS = [
+  {
+    id: 'field', label: 'Field Marketing', cssClass: 'field',
+    channels: [
+      { id:'tpc',  label:'Tech Partner Conf.',   color:'#0c4a6e', text:'#fff', cost:25000, cpMql:250,  cpS1:10000, roi:true  },
+      { id:'ic',   label:'Industry Conf.',        color:'#155e75', text:'#fff', cost:15000, cpMql:250,  cpS1:10000, roi:true  },
+      { id:'ec',   label:'Executive Conference',  color:'#164e63', text:'#fff', cost:20000, cpMql:370,  cpS1:20000, roi:true  },
+      { id:'sife', label:'SI Field Event',        color:'#065f46', text:'#fff', cost:8000,  cpMql:1833, cpS1:20000, roi:true  },
+      { id:'rt',   label:'Roundtable',            color:'#14532d', text:'#fff', cost:5000,  cpMql:1833, cpS1:20000, roi:true  },
+      { id:'ce',   label:'Community Event',       color:'#166534', text:'#fff', cost:4000,  cpMql:null, cpS1:null,  roi:false },
+      { id:'hol',  label:'Hands on Labs',         color:'#0f766e', text:'#fff', cost:6000,  cpMql:250,  cpS1:null,  roi:true  },
+    ]
+  },
+  {
+    id: 'digital', label: 'Digital Channels', cssClass: 'digital',
+    channels: [
+      { id:'ps',   label:'Paid Search',           color:'#3730a3', text:'#fff', cost:6000,  cpMql:null, cpS1:null, roi:true, mql:20, s1:4, pipe:80000 },
+      { id:'pso',  label:'Paid Social',           color:'#6d28d9', text:'#fff', cost:5000,  cpMql:null, cpS1:null, roi:true, mql:15, s1:2, pipe:40000 },
+      { id:'em',   label:'Email Marketing',       color:'#7c3aed', text:'#fff', cost:2000,  cpMql:null, cpS1:null, roi:true, mql:12, s1:2, pipe:35000 },
+      { id:'wb',   label:'Webinar',               color:'#5b21b6', text:'#fff', cost:3000,  cpMql:null, cpS1:null, roi:true, mql:10, s1:2, pipe:30000 },
+      { id:'csy',  label:'Content Syndication',   color:'#9a3412', text:'#fff', cost:8000,  cpMql:450,  cpS1:4000, roi:true  },
+    ]
+  },
+  {
+    id: 'other', label: 'Brand & Other', cssClass: 'other',
+    channels: [
+      { id:'cs',   label:'Case Study',            color:'#92400e', text:'#fff', cost:3000,  cpMql:null, cpS1:null, roi:false },
+      { id:'pr',   label:'PR',                    color:'#475569', text:'#fff', cost:4000,  cpMql:null, cpS1:null, roi:false },
+      { id:'abm',  label:'ABM – RaoK (Physical)', color:'#1e293b', text:'#fff', cost:12000, cpMql:null, cpS1:null, roi:false },
+    ]
+  }
+];
+
+const CHANNELS  = CHANNEL_GROUPS.flatMap(g => g.channels);
+const COUNTRIES = [
+  {name:'Australia',  flag:'🇦🇺'},{name:'New Zealand',flag:'🇳🇿'},
+  {name:'Japan',      flag:'🇯🇵'},{name:'India',      flag:'🇮🇳'},
+  {name:'Singapore',  flag:'🇸🇬'},{name:'Indonesia',  flag:'🇮🇩'},
+  {name:'Malaysia',   flag:'🇲🇾'},{name:'Thailand',   flag:'🇹🇭'},
+];
+const MONTHS  = ['Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan'];
+const Q_START = [0,3,6,9];
+const QUARTERS = [
+  {label:'Q1  Feb – Apr', months:[0,1,2]},
+  {label:'Q2  May – Jul', months:[3,4,5]},
+  {label:'Q3  Aug – Oct', months:[6,7,8]},
+  {label:'Q4  Nov – Jan', months:[9,10,11]},
+];
+
+// ── STATE ─────────────────────────────────────────────────────
+const placed = {};
+COUNTRIES.forEach(c => { placed[c.name] = {}; });
+let editRef = null, dragChannel = null, modalChannel = null;
+
+// ── HELPERS ───────────────────────────────────────────────────
+function ch(id)          { return CHANNELS.find(c => c.id === id); }
+function cellItems(c,mi) { return placed[c][mi] || []; }
+function fmt$(n)         { return n ? '$'+Math.round(n).toLocaleString() : '–'; }
+function fmtN(n)         { return (n===null||n===undefined) ? '–' : Math.round(n).toLocaleString(); }
+function displayName(i)  { return (i.customName||'').trim() || ch(i.chid).label; }
+function uidGen()        { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+
+function calcRoi(channel, cost) {
+  if (!channel.roi) return { mql:null, s1:null, pipe:null };
+  if (!channel.cpMql && channel.mql != null) return { mql:channel.mql, s1:channel.s1, pipe:channel.pipe };
+  const mql  = channel.cpMql ? Math.round(cost / channel.cpMql) : null;
+  const s1   = channel.cpS1  ? Math.round(cost / channel.cpS1)
+               : (mql) ? Math.round(mql * 0.3) : null;
+  const pipe = s1 != null ? s1 * AVG_DEAL : null;
+  return { mql, s1, pipe };
+}
+
+// ── SYNC UI ───────────────────────────────────────────────────
+function setSyncState(state, msg) {
+  document.getElementById('sync-dot').className = 'sync-dot ' + state;
+  document.getElementById('sync-label').textContent = msg;
+  document.getElementById('error-banner').classList.toggle('show', state === 'error');
+}
+
+// ── SHEET SYNC ────────────────────────────────────────────────
+async function loadFromSheet() {
+  setSyncState('saving', 'Loading…');
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=load');
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    COUNTRIES.forEach(c => { placed[c.name] = {}; });
+    data.activities.forEach(a => {
+      if (!placed[a.country]) return;
+      if (!placed[a.country][a.mi]) placed[a.country][a.mi] = [];
+      placed[a.country][a.mi].push(a);
+    });
+    COUNTRIES.forEach(c => MONTHS.forEach((_,mi) => renderCell(c.name, mi)));
+    updateAll();
+    setSyncState('synced', 'Synced · ' + new Date().toLocaleTimeString());
+  } catch(e) {
+    setSyncState('error', 'Could not connect');
+    console.error(e);
+  } finally {
+    document.getElementById('loading-overlay').classList.add('hidden');
+  }
+}
+
+async function saveToSheet(activity) {
+  setSyncState('saving', 'Saving…');
+  try {
+    const res  = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({action:'save', activity}) });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    const item = (placed[activity.country][activity.mi]||[]).find(i => i.uid === activity.uid);
+    if (item) { item.savedBy = data.savedBy; item.savedAt = data.savedAt; }
+    setSyncState('synced', 'Saved · ' + new Date().toLocaleTimeString());
+  } catch(e) { setSyncState('error', 'Save failed'); console.error(e); }
+}
+
+async function deleteFromSheet(uid) {
+  setSyncState('saving', 'Deleting…');
+  try {
+    const res  = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({action:'delete', uid}) });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    setSyncState('synced', 'Deleted · ' + new Date().toLocaleTimeString());
+  } catch(e) { setSyncState('error', 'Delete failed'); console.error(e); }
+}
+
+// ── BUILD SIDEBAR ─────────────────────────────────────────────
+function buildSidebar() {
+  const el = document.getElementById('channel-list');
+  CHANNEL_GROUPS.forEach(group => {
+    const lbl = document.createElement('div');
+    lbl.className = `ch-group-label ${group.cssClass}`;
+    lbl.textContent = group.label;
+    el.appendChild(lbl);
+    group.channels.forEach(c => {
+      const d = document.createElement('div');
+      d.className = 'chip'; d.draggable = true;
+      d.textContent = c.label; d.style.background = c.color; d.style.color = c.text;
+      d.addEventListener('dragstart', e => { dragChannel = c.id; d.classList.add('dragging'); e.dataTransfer.effectAllowed = 'copy'; });
+      d.addEventListener('dragend', () => d.classList.remove('dragging'));
+      el.appendChild(d);
+    });
+  });
+  const leg = document.getElementById('legend');
+  CHANNELS.forEach(c => {
+    const item = document.createElement('div'); item.className = 'legend-item';
+    item.innerHTML = `<span class="legend-dot" style="background:${c.color}"></span>${c.label}`;
+    leg.appendChild(item);
+  });
+}
+
+// ── BUILD CALENDAR ────────────────────────────────────────────
+function buildCalendar() {
+  const cal = document.getElementById('calendar');
+  cal.innerHTML = '';
+  cal.appendChild(mkDiv('q-spacer','FY27'));
+  QUARTERS.forEach(q => q.months.forEach((mi,i) => {
+    const cell = mkDiv('q-header-cell', i===1 ? q.label : '');
+    if(i===0) cell.style.borderLeft = '2px solid rgba(249,115,22,.5)';
+    cal.appendChild(cell);
+  }));
+  cal.appendChild(mkDiv('m-spacer','Country'));
+  MONTHS.forEach((m,mi) => {
+    const cell = mkDiv('m-header', m);
+    if(Q_START.includes(mi)) cell.classList.add('q-start');
+    cal.appendChild(cell);
+  });
+  COUNTRIES.forEach(country => {
+    const label = document.createElement('div'); label.className = 'country-label';
+    label.innerHTML = `<span style="font-size:16px">${country.flag}</span><span>${country.name}</span>`;
+    cal.appendChild(label);
+    MONTHS.forEach((_,mi) => {
+      const cell = document.createElement('div'); cell.className = 'drop-cell';
+      if(Q_START.includes(mi)) cell.classList.add('q-start');
+      cell.id = `cell-${country.name}-${mi}`;
+      setupDrop(cell, country.name, mi);
+      cal.appendChild(cell);
+    });
+  });
+}
+
+function mkDiv(cls, text) {
+  const d = document.createElement('div'); d.className = cls;
+  if(text) d.textContent = text; return d;
+}
+
+function setupDrop(cell, country, mi) {
+  cell.addEventListener('dragover', e => { e.preventDefault(); cell.classList.add('drag-over'); });
+  cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
+  cell.addEventListener('drop', async e => {
+    e.preventDefault(); cell.classList.remove('drag-over');
+    if(!dragChannel) return;
+    const c = ch(dragChannel);
+    const roi = calcRoi(c, c.cost);
+    if(!placed[country][mi]) placed[country][mi] = [];
+    const newItem = { uid:uidGen(), country, mi, chid:dragChannel, customName:'', cost:c.cost, mql:roi.mql, s1:roi.s1, pipe:roi.pipe, notes:'', savedBy:'', savedAt:'' };
+    placed[country][mi].push(newItem);
+    renderCell(country, mi); updateAll();
+    dragChannel = null;
+    await saveToSheet(newItem);
+    renderCell(country, mi);
+  });
+}
+
+function renderCell(country, mi) {
+  const cell = document.getElementById(`cell-${country}-${mi}`);
+  if(!cell) return;
+  cell.innerHTML = '';
+  cellItems(country, mi).forEach((item, idx) => {
+    const c = ch(item.chid); if(!c) return;
+    const chip = document.createElement('div'); chip.className = 'placed-chip';
+    chip.style.background = c.color; chip.style.color = c.text;
+    const meta = item.savedBy ? item.savedBy.split('@')[0] : '';
+    chip.innerHTML = `
+      <div class="chip-inner">
+        <span class="chip-label">${displayName(item)}</span>
+        ${meta ? `<span class="chip-meta">↳ ${meta}</span>` : ''}
+      </div>
+      <button class="rm-btn" title="Remove">×</button>`;
+    chip.querySelector('.rm-btn').addEventListener('click', async e => {
+      e.stopPropagation();
+      const uid = item.uid;
+      placed[country][mi].splice(idx, 1);
+      renderCell(country, mi); updateAll();
+      await deleteFromSheet(uid);
+    });
+    chip.addEventListener('click', () => openModal(country, mi, idx));
+    cell.appendChild(chip);
+  });
+}
+
+// ── MODAL ─────────────────────────────────────────────────────
+function updateRoiPreview() {
+  if (!modalChannel || !modalChannel.roi) return;
+  const cost = parseFloat(document.getElementById('m-cost').value) || 0;
+  const mqlInp  = document.getElementById('m-mql');
+  const s1Inp   = document.getElementById('m-s1');
+  const pipeInp = document.getElementById('m-pipe');
+  const overrideMql  = mqlInp  && mqlInp.value  !== '' ? parseFloat(mqlInp.value)  : null;
+  const overrideS1   = s1Inp   && s1Inp.value   !== '' ? parseFloat(s1Inp.value)   : null;
+  const overridePipe = pipeInp && pipeInp.value !== '' ? parseFloat(pipeInp.value) : null;
+  const calc = calcRoi(modalChannel, cost);
+  const mql  = overrideMql  ?? calc.mql;
+  const s1   = overrideS1   ?? calc.s1;
+  const pipe = overridePipe ?? calc.pipe;
+  document.getElementById('rp-mql').textContent  = mql  != null ? Math.round(mql)  : '–';
+  document.getElementById('rp-s1').textContent   = s1   != null ? Math.round(s1)   : '–';
+  document.getElementById('rp-pipe').textContent = pipe != null ? fmt$(pipe)        : '–';
+  document.getElementById('rp-cpmql').textContent = (mql && cost) ? fmt$(Math.round(cost/mql)) : '–';
+  document.getElementById('rp-note').textContent = modalChannel.cpMql
+    ? `Benchmarks: CP-MQL $${modalChannel.cpMql.toLocaleString()}${modalChannel.cpS1?' · CP-S1 $'+modalChannel.cpS1.toLocaleString():''} · Avg deal $${(AVG_DEAL/1000).toFixed(0)}k` : '';
+}
+
+function openModal(country, mi, idx) {
+  editRef = {country, mi, idx};
+  const item = placed[country][mi][idx];
+  const c = ch(item.chid);
+  modalChannel = c;
+  document.getElementById('modal-title').textContent = `${c.label}  ·  ${country}  ·  ${MONTHS[mi]}`;
+  document.getElementById('m-name').value  = item.customName || '';
+  document.getElementById('m-name').placeholder = c.label;
+  document.getElementById('m-cost').value  = item.cost ?? c.cost;
+  document.getElementById('m-notes').value = item.notes ?? '';
+  document.getElementById('modal-saved-by').textContent = item.savedBy
+    ? `Last saved by ${item.savedBy} · ${new Date(item.savedAt).toLocaleString()}` : '';
+  const roiWrap = document.getElementById('roi-fields-wrap');
+  const roiSec  = document.getElementById('m-roi-section');
+  const preview = document.getElementById('roi-preview');
+  if (c.roi) {
+    preview.classList.remove('hidden');
+    roiWrap.style.display = '';
+    roiSec.innerHTML = `
+      <div class="modal-grid-inner"><label>MQL override</label><input id="m-mql" type="number" min="0" class="modal-input" placeholder="auto" value="${item.mql??''}" oninput="updateRoiPreview()"></div>
+      <div class="modal-grid-inner"><label>S1 override</label><input id="m-s1" type="number" min="0" class="modal-input" placeholder="auto" value="${item.s1??''}" oninput="updateRoiPreview()"></div>
+      <div class="modal-grid-inner" style="grid-column:span 2"><label>Pipeline override ($)</label><input id="m-pipe" type="number" min="0" class="modal-input" placeholder="auto" value="${item.pipe??''}" oninput="updateRoiPreview()"></div>`;
+  } else {
+    preview.classList.add('hidden');
+    roiWrap.style.display = 'none';
+    roiSec.innerHTML = '';
+  }
+  updateRoiPreview();
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  editRef = null; modalChannel = null;
+}
+
+async function saveModal() {
+  if(!editRef) return;
+  const {country, mi, idx} = editRef;
+  const item = placed[country][mi][idx];
+  const c = ch(item.chid);
+  item.customName = document.getElementById('m-name').value.trim();
+  item.cost  = parseFloat(document.getElementById('m-cost').value) || 0;
+  item.notes = document.getElementById('m-notes').value;
+  if(c.roi) {
+    const mqlInp  = document.getElementById('m-mql');
+    const s1Inp   = document.getElementById('m-s1');
+    const pipeInp = document.getElementById('m-pipe');
+    const calc = calcRoi(c, item.cost);
+    item.mql  = (mqlInp  && mqlInp.value  !== '') ? parseFloat(mqlInp.value)  : calc.mql;
+    item.s1   = (s1Inp   && s1Inp.value   !== '') ? parseFloat(s1Inp.value)   : calc.s1;
+    item.pipe = (pipeInp && pipeInp.value !== '') ? parseFloat(pipeInp.value) : calc.pipe;
+  }
+  closeModal(); renderCell(country, mi); updateAll();
+  await saveToSheet(item); renderCell(country, mi);
+}
+
+async function deleteActivity() {
+  if(!editRef) return;
+  const {country, mi, idx} = editRef;
+  const uid = placed[country][mi][idx].uid;
+  placed[country][mi].splice(idx, 1);
+  closeModal(); renderCell(country, mi); updateAll();
+  await deleteFromSheet(uid);
+}
+
+document.getElementById('modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+
+// ── SUMMARY ───────────────────────────────────────────────────
+function updateAll() {
+  let totCost=0, totMql=0, totS1=0, totPipe=0, totCmp=0;
+  const tbody = document.getElementById('summary-body');
+  tbody.innerHTML = '';
+  COUNTRIES.forEach(country => {
+    let cCost=0, cMql=0, cS1=0, cPipe=0, cCmp=0; const chCounts={};
+    Object.values(placed[country.name]).forEach(items => items.forEach(item => {
+      cCost+=item.cost||0; cMql+=item.mql||0; cS1+=item.s1||0; cPipe+=item.pipe||0; cCmp++;
+      chCounts[item.chid]=(chCounts[item.chid]||0)+1;
+    }));
+    totCost+=cCost; totMql+=cMql; totS1+=cS1; totPipe+=cPipe; totCmp+=cCmp;
+    const topCh = Object.entries(chCounts).sort((a,b)=>b[1]-a[1]).slice(0,3)
+      .map(([id,n])=>{ const c=ch(id); return `<span style="display:inline-block;background:${c.color};color:${c.text};border-radius:4px;padding:1px 6px;font-size:10px;font-weight:500;margin-right:3px">${c.label}${n>1?' ×'+n:''}</span>`; }).join('');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="country-cell"><span style="font-size:16px">${country.flag}</span>${country.name}</div></td>
+      <td><span class="campaign-badge">${cCmp}</span></td>
+      <td class="cost-val">${fmt$(cCost)}</td>
+      <td>${cMql>0?fmtN(cMql):'<span class="na-text">–</span>'}</td>
+      <td>${cS1>0?fmtN(cS1):'<span class="na-text">–</span>'}</td>
+      <td class="pipe-val">${cPipe>0?fmt$(cPipe):'<span class="na-text" style="font-weight:400">–</span>'}</td>
+      <td>${topCh||'<span class="na-text">No activities yet</span>'}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('summary-foot').innerHTML = `<tr>
+    <td>APAC Total</td><td>${totCmp} campaigns</td><td>${fmt$(totCost)}</td>
+    <td>${totMql>0?fmtN(totMql):'–'}</td><td>${totS1>0?fmtN(totS1):'–'}</td>
+    <td>${totPipe>0?fmt$(totPipe):'–'}</td><td></td></tr>`;
+  document.getElementById('tot-cost').textContent = fmt$(totCost);
+  document.getElementById('tot-mql').textContent  = fmtN(totMql);
+  document.getElementById('tot-s1').textContent   = fmtN(totS1);
+  document.getElementById('tot-pipe').textContent = fmt$(totPipe);
+  document.getElementById('tot-cmp').textContent  = totCmp;
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+buildSidebar();
+buildCalendar();
+updateAll();
+loadFromSheet();
+setInterval(() => loadFromSheet(), 60000);
+</script>
+</body>
+</html>
